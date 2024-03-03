@@ -11,10 +11,6 @@ import asyncio
 from threading import Thread
 from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, QThread, Qt
 
-
-# Потоки для 
-
-
 def check_for_updates():
     # URL, где содержится версия приложения
     version_url = "********"
