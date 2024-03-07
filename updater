@@ -1,0 +1,34 @@
+import requests
+import shutil
+import sys
+import os
+from PyQt6.QtWidgets import QMessageBox, QApplication
+
+def update_launcher():
+    # URL последней версии файла AbxLauncher.exe на GitHub
+    github_release_url = "https://github.com/abiks-xakep/abx-test-project/releases/latest/download/AbxLauncher.exe"
+
+    try:
+        # Отправляем GET-запрос к URL на GitHub
+        response = requests.get(github_release_url, stream=True)
+
+        # Проверяем успешность запроса
+        if response.status_code == 200:
+            # Открываем файл для записи в бинарном режиме
+            with open("AbxLauncher.exe", 'wb') as f:
+                # Записываем содержимое ответа в файл
+                response.raw.decode_content = True
+                shutil.copyfileobj(response.raw, f)
+            QMessageBox.information(None, "Обновление", "Обновление успешно завершено.")
+            os.startfile("AbxLauncher.exe")
+        else:
+            QMessageBox.critical(None, "Ошибка", f"Ошибка при загрузке файла: {response.status_code}")
+    except Exception as e:
+        QMessageBox.critical(None, "Ошибка", f"Ошибка: {e}")
+
+# Вызываем функцию для обновления AbxLauncher.exe
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    QMessageBox.information(None, "Обновление", "Нажмите OK и подожди около минуты до следующего информационного окна.")
+    update_launcher()
+    sys.exit(app.exec())
