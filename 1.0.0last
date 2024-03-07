@@ -11,37 +11,40 @@ import asyncio
 from threading import Thread
 from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, QThread, Qt
 
+#07.03.2024
+
+
 def check_for_updates():
-    # URL, где содержится версия приложения
-    version_url = "********"
+    # URL, где содержится информация о последней версии на GitHub
+    github_repo_url = "********"
 
     try:
-        # Отправляем GET-запрос к веб-серверу
-        response = requests.get(version_url)
+        # Отправляем GET-запрос к репозиторию GitHub
+        response = requests.get(github_repo_url)
         
         # Проверяем успешность запроса
         if response.status_code == 200:
-            # Получаем версию из ответа
-            server_version = response.text.strip()
+            # Получаем информацию о релизе из ответа
+            release_info = response.json()
+            latest_version = release_info['tag_name']
 
             # Текущая версия вашего приложения
-            app_version = "1.0.0"
+            app_version = "1.0.0"  # Ваш текущий номер версии
 
             # Проверяем, совпадает ли версия
-            if server_version == app_version:
-                QMessageBox.information(None, "Обновления", "Последняя версия программы.")
+            if latest_version != app_version:
+                # Запускаем updater.exe
+                result = QMessageBox.information(None, "Обновление", "Доступна новая версия программы. Желаете обновиться?", QMessageBox.Ok | QMessageBox.Cancel)
+                if result == QMessageBox.Ok:
+                    subprocess.Popen(["updater.exe"])
+                sys.exit()
             else:
-                QMessageBox.warning(None, "Обновления", "Обнаружена новая версия программы. Свяжитесь с администратором для получения информации")
+                QMessageBox.information(None, "Внимание", "Последняя версия программы уже установлена.")
+
         else:
-            QMessageBox.critical(None, "Ошибка", f"Ошибка при получении версии: {response.status_code}")
+            print(f"Ошибка при получении информации о релизе: {response.status_code}")
     except Exception as e:
-        QMessageBox.critical(None, "Ошибка", f"Ошибка: {e}")
-
-def main():
-    script_directory = os.getcwd()
-    check_for_updates()
-
-
+        print(f"Ошибка: {e}")
 
 class Downloader(QObject):
     progress_updated = pyqtSignal(int)
@@ -52,7 +55,7 @@ class Downloader(QObject):
     def download_files(self):
         try:
             script_directory = os.getcwd()
-            url = "********"
+            url = "*********"
             response = requests.get(url, stream=True)
             downloaded_file_path = os.path.join(script_directory, "Files.zip")
 
@@ -95,6 +98,7 @@ class MinecraftLauncher(QMainWindow):
         self.downloader.finished.connect(self.on_download_finished)        
         self.init_ui()
         self.setFixedSize(500, 500)
+        check_for_updates()
 
     def init_ui(self):
         
@@ -151,6 +155,7 @@ class MinecraftLauncher(QMainWindow):
         self.download_button = QPushButton('Скачать файлы', self)
         self.download_button.setGeometry(30, 319, 167, 35)
         self.download_button.clicked.connect(self.download_version_files)
+        
 
         self.launch_button = QPushButton('Запустить игру', self)
         self.launch_button.setGeometry(207, 319, 167, 35)
@@ -202,7 +207,6 @@ class MinecraftLauncher(QMainWindow):
                 self.password_entry.setText(password)
         except FileNotFoundError: 
             pass
-
         self.check_download_status()
         self.show()
 
@@ -255,6 +259,7 @@ class MinecraftLauncher(QMainWindow):
             self.show_password_button.setText('Показать пароль')
 
     def download_version_files(self):
+        self.download_button.setEnabled(False)
         self.download_thread = QThread()
         self.downloader.moveToThread(self.download_thread)
         self.download_thread.started.connect(self.downloader.download_files)
@@ -262,6 +267,7 @@ class MinecraftLauncher(QMainWindow):
     def on_download_finished(self):
         QMessageBox.information(None, "Успех", f"Файлы Minecraft успешно скачаны.")
         self.launch_button.setEnabled(True)
+        self.download_button.setEnabled(True)
     def launch_minecraft(self):
         self.launch_button.setEnabled(False)
         username = self.username_entry.text()
