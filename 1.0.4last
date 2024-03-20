@@ -41,7 +41,7 @@ def check_for_updates():
             latest_version = release_info['tag_name']
 
             # Текущая версия вашего приложения
-            app_version = "1.0.3"  # Ваш текущий номер версии
+            app_version = "1.0.4"  # Ваш текущий номер версии
 
             # Проверяем, совпадает ли версия
             if latest_version != app_version:
